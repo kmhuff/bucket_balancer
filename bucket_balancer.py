@@ -1,5 +1,13 @@
 #! /usr/bin/env python3
 
+import argparse
+
+def bucket(input):
+    list = input.split(':')
+    valueFlt = float(list[1])
+    valueFlt = valueFlt * 100
+    return Bucket(list[0], int(valueFlt), int(list[2]))
+
 class Bucket:
     def __init__(self, name, value, weight):
         self.name = name
@@ -13,7 +21,7 @@ class Bucket:
     def diffToTargetSizeForTotal(self, total):
         targetSize = total * self.ratio
 
-        if self.targetSize < self.value:
+        if targetSize < self.value:
             raise Exception("Target less than current value")
  
         self.diff = targetSize - self.value
@@ -26,7 +34,7 @@ class Bucket:
         self.ratio = float(self.weight) / float(totalWeight)
 
     def print(self):
-        print("%s (weight %d): %.2f\n" %(name, weight, float(fill)/100))
+        print("%s (weight %d): %.2f\n" %(self.name, self.weight, float(self.fill)/100))
 
 
 def balancedInsert(bucketMap, insertAmt):
@@ -53,7 +61,6 @@ def balancedInsert(bucketMap, insertAmt):
         totalDiff += item[1].diffToTargetSizeForTotal(largestExpectedSize)
 
     if totalDiff > insertAmt:
-        finishedBuckets = {k:bucketMap[k] for k in bucketMap if k in relLargestBuckets}
         workingBuckets = {k:bucketMap[k] for k in bucketMap if k not in relLargestBuckets}
         balancedInsert(workingBuckets, insertAmt)
     else:
@@ -61,6 +68,19 @@ def balancedInsert(bucketMap, insertAmt):
         for item in bucketMap.items():
             item[1].fillDiff()
             item[1].fill += insertAmt * item[1].ratio
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Insert money into multiple weighted buckets and preserve their weights")
+    parser.add_argument('buckets', metavar='bucket', type=bucket, nargs='+', help='Buckets in the format Name:CurrentValue:Weight where Name is a non-spaced string, CurrentValue is a float with a maximum of two decimal places, and Weight is an int')
+    parser.add_argument('--deposit', type=float, help='The ammount to be added')
+
+    args = parser.parse_args()
+
+    bucketMap = {bucket.name:bucket for bucket in args.buckets}
+    deposit = int(args.deposit * 100)
+
+    balancedInsert(bucketMap, deposit)
 
     for item in bucketMap.items():
         item[1].print()
