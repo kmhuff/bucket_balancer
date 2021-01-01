@@ -63,7 +63,7 @@ class Rebalance:
         for acct in self.negAccts:
             self.sizeMap[self.posAcct] += self.sizeMap[acct]
 
-        self.fillMap = {key:0 for key,value in self.sizeMap.keys()}
+        self.fillMap = {key:0 for key in self.sizeMap.keys()}
 
     def size(self):
         return self.sizeMap[self.posAcct]
@@ -122,8 +122,9 @@ class AssetClass:
         return Rebalance(self.accountValueList[balanceIt:])
 
     def rebalance(self, proposedRebalance):
+        #print("rebalance")
         # index as a map for convinience
-        tempMap = {accountValue[0].name:accountValue[1] for accountValue in accountValueList}
+        tempMap = {accountValue[0].name:accountValue[1] for accountValue in self.accountValueList}
         # subtract as much of prop.size as we can from positive accts (minimum of prop.size, pos_size)
         valueToChange = min(proposedRebalance.size(), tempMap[proposedRebalance.posAcct].value)
         tempMap[proposedRebalance.posAcct].fillUp(-1 * valueToChange)
@@ -132,17 +133,20 @@ class AssetClass:
         # add the ammount we subtracted to the neg_size buckets, least significant to most, to a max of the corresponding neg size
         index = -1
         valueLeft = valueToChange
-        whlie self.accountValueList[index][0].name != proposedRebalance.posAcct:
+        while self.accountValueList[index][0].name != proposedRebalance.posAcct:
+            #print("end to begin loop")
             valueToAdd = min(self.accountValueList[index][1].value, proposedRebalance.sizeMap[self.accountValueList[index][0].name], valueLeft)
             self.accountValueList[index][1].fillUp(valueToAdd)
-            proposedRebalance.sizeMap[] -= valueToAdd
+            proposedRebalance.sizeMap[self.accountValueList[index][0].name] -= valueToAdd
             proposedRebalance.fill(self.accountValueList[index][0].name, valueToAdd)
             valueLeft -= valueToAdd
 
-    def concludeRebalance(self, proposedRebalance):
-        tempMap = {accountValue[0].name:accountValue[1] for accountValue in accountValueList}
+            index -= 1
 
-        for name,fill in proposedRebalance.fillMap:
+    def concludeRebalance(self, proposedRebalance):
+        tempMap = {accountValue[0].name:accountValue[1] for accountValue in self.accountValueList}
+
+        for name,fill in proposedRebalance.fillMap.items():
             coeff = 1
             if name != proposedRebalance.posAcct:
                 coeff = -1
@@ -151,6 +155,7 @@ class AssetClass:
 
 
 def balancedInsert(classMap, insertAmt):
+    #print("balancedInsert")
     for value in classMap.values():
         value.finalizeAccountValueList()
 
@@ -187,16 +192,20 @@ def balancedInsert(classMap, insertAmt):
 
 
 def accountRebalance(classMap):
+    #print("accountRebalance")
     classList = [assetClass for assetClass in classMap.values()]
     classList.sort(key=lambda assetClass: assetClass.priority)
 
     begin = 0
     while begin < len(classList):
+        #print("begin loop")
         for balanceIt in range(classList[begin].totalRebalances()):
+            #print("rebalanceIt loop")
             proposedRebalance = classList[begin].proposeRebalance(balanceIt)
 
             end = -1
-            while !(proposedRebalance.size == 0 || classList[end].name == classList[begin].name):
+            while not (proposedRebalance.size == 0 or classList[end].name == classList[begin].name):
+                #print("end loop")
                 classList[end].rebalance(proposedRebalance)
                 end -= 1
 
@@ -235,6 +244,7 @@ if __name__ == "__main__":
         classMap[bucket.className].addAccountValue((accountMap[bucket.acctName], bucket))
 
     deposit = int(args.deposit * 100)
+
     balancedInsert(classMap, deposit)
     accountRebalance(classMap)
 
