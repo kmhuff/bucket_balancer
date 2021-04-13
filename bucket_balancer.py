@@ -219,6 +219,7 @@ if __name__ == "__main__":
     parser.add_argument('buckets', metavar='bucket', type=bucket, nargs='+', help='Buckets in the format AccountName:ClassName:CurrentValue where names are non-spaced strings identical to config file names and CurrentValue is a float with a maximum of two decimal places')
     parser.add_argument('--deposit', type=float, help='The ammount to be added (max two decimal places)')
     parser.add_argument('--config', type=str, help='Path to the configuration file to be used')
+    parser.add_argument('--rebalance', action='store_true', help='Rebalance accounts')
 
     args = parser.parse_args()
 
@@ -246,7 +247,8 @@ if __name__ == "__main__":
     deposit = int(args.deposit * 100)
 
     balancedInsert(classMap, deposit)
-    accountRebalance(classMap)
+    if args.rebalance:
+        accountRebalance(classMap)
 
     for bucket in args.buckets:
         bucket.print()
