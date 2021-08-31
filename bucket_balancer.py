@@ -3,6 +3,7 @@
 import argparse
 import configparser
 import copy
+import os
 
 def bucket(input):
     list = input.split(':')
@@ -224,7 +225,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     parser = configparser.ConfigParser()
-    parser.read_file(open('/home/kmhuff/.bucket_balancer.conf'))
+    parser.read_file(open(os.path.expanduser('~') + '/.bucket_balancer.conf'))
 
     accountMap = {}
     classMap = {}
